@@ -1,0 +1,62 @@
+# Found the number of patients diagnosed with each condition, ordered by frequency:
+SELECT d.diagnosis_name, COUNT(DISTINCT d.patient_id) AS num_patients
+FROM Diagnoses d
+GROUP BY d.diagnosis_name
+ORDER BY num_patients DESC;
+
+# Found the average age of patients diagnosed with Depression in a specific location:
+SELECT AVG(p.age) AS average_age
+FROM Patients p
+JOIN Diagnoses d ON p.patient_id = d.patient_id
+WHERE d.diagnosis_name = 'Depression' AND p.location = 'New York';
+
+# Found patients who have received both Therapy and Medication for Anxiety:
+SELECT p.patient_id
+FROM Patients p
+JOIN Treatments t ON p.patient_id = t.patient_id
+JOIN Diagnoses d ON p.patient_id = d.patient_id
+WHERE d.diagnosis_name = 'Anxiety'
+AND t.treatment_type = 'Therapy'
+INTERSECT  -- Or use a subquery if INTERSECT is not supported
+SELECT p.patient_id
+FROM Patients p
+JOIN Treatments t ON p.patient_id = t.patient_id
+JOIN Diagnoses d ON p.patient_id = d.patient_id
+WHERE d.diagnosis_name = 'Anxiety'
+AND t.treatment_type = 'Medication';
+
+# Found the most common symptom reported by patients diagnosed with PTSD:
+SELECT s.symptom_name, COUNT(*) AS symptom_count
+FROM Patients p
+JOIN Diagnoses d ON p.patient_id = d.patient_id
+JOIN Symptoms s ON p.patient_id = s.patient_id
+WHERE d.diagnosis_name = 'PTSD'
+GROUP BY s.symptom_name
+ORDER BY symptom_count DESC
+LIMIT 1;
+
+# Calculated the average time between diagnosis and the start of treatment for Depression:
+SELECT AVG(JULIANDAY(t.start_date) - JULIANDAY(d.diagnosis_date)) AS avg_days_to_treatment
+FROM Patients p
+JOIN Diagnoses d ON p.patient_id = d.patient_id
+JOIN Treatments t ON p.patient_id = t.patient_id
+WHERE d.diagnosis_name = 'Depression';
+
+# Found patients who have had a significant life event (from Patient_History) within the last year and have been diagnosed with Anxiety: 
+SELECT p.patient_id
+FROM Patients p
+JOIN Patient_History ph ON p.patient_id = ph.patient_id
+JOIN Diagnoses d ON p.patient_id = d.patient_id
+WHERE d.diagnosis_name = 'Anxiety'
+  AND ph.event_date BETWEEN DATE('now', '-1 year') AND DATE('now');
+
+# Found professionals who have diagnosed more than 10 patients with PTSD:
+
+SELECT prof.professional_name, COUNT(DISTINCT d.patient_id) as num_ptsd_diagnoses
+FROM Professionals prof
+JOIN Diagnoses d ON prof.professional_id = d.diagnosing_professional
+WHERE d.diagnosis_name = 'PTSD'
+GROUP BY prof.professional_name
+HAVING COUNT(DISTINCT d.patient_id) > 10;
+
+
